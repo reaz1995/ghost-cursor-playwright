@@ -5,7 +5,7 @@ Modification of actual ghost-cursor for puppetter, with more functionality.
 ### Download
 
 ```
-git clone https://github.com/Xetera/ghost-cursor.git cursor
+git clone https://github.com/reaz1995/ghost-cursor-playwright.git cursor
 cd cursor
 npm install
 ```
