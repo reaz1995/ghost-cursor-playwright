@@ -39,9 +39,7 @@ export interface Cursor {
 	randomMove(): Promise<void>;
 }
 export interface Actions {
-	click(
-		options?:clickOptions
-	): Promise<void>;
+	click(options?: clickOptions): Promise<void>;
 	move(targetElem: string | BoundingBox): Promise<void>;
 	moveTo(destination: Vector): Promise<void>;
 }
@@ -160,16 +158,17 @@ export class Cursor {
 			vwHeight = viewPortBox.height;
 			vwWidth = viewPortBox.width;
 
-			if (totalElemHeight <= vwHeight && totalElemWidth <= vwWidth && elemY > 0 && elemX > 0) break;
+			if (totalElemHeight <= vwHeight && totalElemWidth <= vwWidth && elemY >= 0 && elemX >= 0)
+				break;
 			if (elemY > 0) {
 				await this.page.mouse.wheel(0, 200);
 			} else if (elemY < 0) {
 				await this.page.mouse.wheel(0, -200);
 			}
 			if (elemX > 0) {
-				await this.page.mouse.wheel(200, 0);
+				await this.page.mouse.wheel(100, 0);
 			} else if (elemX < 0) {
-				await this.page.mouse.wheel(-200, 0);
+				await this.page.mouse.wheel(-100, 0);
 			}
 
 			await sleep(randomValue(80, 150));
@@ -283,11 +282,11 @@ export class Cursor {
 				delayMax = options.delay[1];
 				if (delayMin > delayMax || delayMax < 0 || delayMin < 0)
 					throw new Error('wrong delay time');
-      }
+			}
 
-      if ( options.doubleClick !== undefined) {
-        doubleClick = options.doubleClick;
-      }
+			if (options.doubleClick !== undefined) {
+				doubleClick = options.doubleClick;
+			}
 
 			const delayTime = randomValue(delayMin, delayMax);
 			if (this.performRandomMoves) this.randomMove();
@@ -297,7 +296,7 @@ export class Cursor {
 			await this.page.mouse.up();
 
 			if (doubleClick !== undefined && doubleClick === true)
-				this.actions.click({ delay:[delayMin, delayMax] });
+				this.actions.click({ delay: [delayMin, delayMax] });
 
 			this.toggleRandomMove(true);
 		},
