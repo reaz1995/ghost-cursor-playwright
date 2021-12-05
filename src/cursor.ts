@@ -46,11 +46,7 @@ export interface Actions {
 	moveTo(destination: Vector): Promise<void>;
 }
 
-type clickOptions = {
-	delay?: [number, number];
-	doubleClick?: boolean;
-};
-type moveOptions = {
+export type clickOptions = {
 	delay?: [number, number];
 	doubleClick?: boolean;
 };
