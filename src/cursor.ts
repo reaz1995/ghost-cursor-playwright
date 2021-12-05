@@ -40,12 +40,20 @@ export interface Cursor {
 }
 export interface Actions {
 	click(
-		{ delayMin, delayMax }: { delayMin: number; delayMax: number },
-		doubleClick?: boolean
+		options?:clickOptions
 	): Promise<void>;
 	move(targetElem: string | BoundingBox): Promise<void>;
 	moveTo(destination: Vector): Promise<void>;
 }
+
+type clickOptions = {
+	delay?: [number, number];
+	doubleClick?: boolean;
+};
+type moveOptions = {
+	delay?: [number, number];
+	doubleClick?: boolean;
+};
 
 // ---------------------------------------------------------------
 
@@ -268,8 +276,22 @@ export class Cursor {
 	}
 
 	actions: Actions = {
-		click: async ({ delayMin = 20, delayMax = 50 }, doubleClick?: boolean): Promise<void> => {
-			if (delayMin > delayMax || delayMax < 0 || delayMin < 0) throw new Error('wrong max delay');
+		click: async (options?: clickOptions): Promise<void> => {
+			// default values
+			let delayMin = 20,
+				delayMax = 50;
+			let doubleClick = false;
+
+			if (options.delay !== undefined) {
+				delayMin = options.delay[0];
+				delayMax = options.delay[1];
+				if (delayMin > delayMax || delayMax < 0 || delayMin < 0)
+					throw new Error('wrong delay time');
+      }
+
+      if ( options.doubleClick !== undefined) {
+        doubleClick = options.doubleClick;
+      }
 
 			const delayTime = randomValue(delayMin, delayMax);
 			if (this.performRandomMoves) this.randomMove();
@@ -279,7 +301,7 @@ export class Cursor {
 			await this.page.mouse.up();
 
 			if (doubleClick !== undefined && doubleClick === true)
-				this.actions.click({ delayMin, delayMax });
+				this.actions.click({ delay:[delayMin, delayMax] });
 
 			this.toggleRandomMove(true);
 		},
