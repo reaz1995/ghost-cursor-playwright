@@ -28,7 +28,6 @@ import { createCursor } from './cursor';
 		);
 		await cursor.actions.click({ delay: [20, 50] });
 	} catch (error: any) {
-		console.log('here');
 		console.log(error.message);
 	}
 })();

@@ -62,7 +62,6 @@ async function installMouseHelper(page: playwright.Page): Promise<void> {
 			document.addEventListener(
 				'mousedown',
         ( event ) => {
-          console.log('click')
 					updateButtons(event.buttons);
 					box.classList.add('button-' + String(event.which));
 					box.classList.remove('p-mouse-pointer-hide');

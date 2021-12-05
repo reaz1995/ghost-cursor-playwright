@@ -158,13 +158,14 @@ export class Cursor {
 			vwHeight = viewPortBox.height;
 			vwWidth = viewPortBox.width;
 
-			if (totalElemHeight <= vwHeight && totalElemWidth <= vwWidth && elemY >= 0 && elemX >= 0)
-				break;
+			if (totalElemHeight <= vwHeight && elemY >= 0) break;
 			if (elemY > 0) {
 				await this.page.mouse.wheel(0, 200);
 			} else if (elemY < 0) {
 				await this.page.mouse.wheel(0, -200);
 			}
+
+			if (totalElemWidth <= vwWidth && elemX >= 0) break;
 			if (elemX > 0) {
 				await this.page.mouse.wheel(100, 0);
 			} else if (elemX < 0) {
