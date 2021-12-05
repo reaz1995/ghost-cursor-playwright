@@ -1,0 +1,5 @@
+dist
+.cache
+node_modules
+lib
+test.ts

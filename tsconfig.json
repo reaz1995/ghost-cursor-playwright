@@ -1,0 +1,25 @@
+{
+	"compilerOptions": {
+		"rootDir": "./src" /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */,
+		"target": "ES2019",
+		"module": "commonjs",
+		"lib": ["ES2019", "dom"],
+		"skipLibCheck": true,
+		"declaration": true,
+		"removeComments": true /* Do not emit comments to output. */,
+		"downlevelIteration": true /* Provide full support for iterables in 'for-of', spread, and destructuring when targeting 'ES5' or 'ES3'. */,
+		"allowJs": true,
+		"outDir": "./lib" /* Redirect output structure to the directory. */,
+		"sourceMap": true,
+		"strict": true,
+		"esModuleInterop": true,
+		"noImplicitAny": false,
+		"noImplicitThis": false,
+		"strictNullChecks": false,
+		"allowSyntheticDefaultImports": true,
+		"moduleResolution": "node",
+		"forceConsistentCasingInFileNames": true
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules"]
+}

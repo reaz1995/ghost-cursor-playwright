@@ -1,0 +1,28 @@
+{
+	"name": "ghost-cursor-playwright",
+	"version": "1.0.0",
+	"description": "Move your mouse like a human in playwright or generate realistic movements on any 2D plane",
+	"repository": "",
+	"main": "lib/cursor.js",
+	"types": "lib/cursor.d.ts",
+	"keywords": [
+		"bezier-curve",
+		"mouse-movement",
+		"botting"
+	],
+	"author": "reaz",
+	"license": "MIT",
+	"files": [
+		"lib/**/*"
+	],
+	"dependencies": {
+		"bezier-js": "^4.1.1",
+		"playwright": "^1.17.1"
+	},
+	"devDependencies": {
+		"@types/bezier-js": "^4.1.0",
+		"@types/node": "^16.11.11",
+		"ts-node": "^10.4.0",
+		"typescript": "^4.5.2"
+	}
+}
