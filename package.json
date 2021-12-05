@@ -15,6 +15,10 @@
 	"files": [
 		"lib/**/*"
 	],
+  "scripts":{
+    "build":"tsc",
+    "test":"tsc && node ./lib/test.js"
+  },
 	"dependencies": {
 		"bezier-js": "^4.1.1",
 		"playwright": "^1.17.1"
