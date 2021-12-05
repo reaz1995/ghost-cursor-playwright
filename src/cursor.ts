@@ -11,7 +11,7 @@ export async function createCursor(
 ) {
 	if (debug) await installMouseHelper(page);
 	await addMousePositionTracker(page);
-	const randomStartPoint = await getWindowDimension(page);
+	const randomStartPoint = await getRandomStartPoint(page);
 	return new Cursor(page, randomStartPoint, overshootSpread, overshootRadius);
 }
 
@@ -49,7 +49,7 @@ export interface Actions {
 
 // ---------------------------------------------------------------
 
-export async function getWindowDimension(page: playwright.Page) {
+export async function getRandomStartPoint(page: playwright.Page) {
 	const windowDimension = JSON.parse(
 		await page.evaluate(() => {
 			const windowDimension = {
