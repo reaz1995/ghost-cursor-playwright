@@ -1,6 +1,7 @@
 # ghost-cursor-playwright
 
 Modification of actual ghost-cursor for puppeteer, with more functionality and rewrited to work well with playwight.
+Note! target elements rendered in the DOM will be scrolled vertically and horzontaly to be visible in viewport
 
 ### Download
 
@@ -18,6 +19,14 @@ npm run example
 ```
 
 for wsl2 don't forget to set up displayer
+
+### Download as package
+```
+npm i ghost-cursor-playwright
+import { createCursor } from 'ghost-cursor-playwright';
+or
+const createCursor = require('ghost-cursor-playwright');
+```
 
 ### How to use
 
