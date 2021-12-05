@@ -1,6 +1,6 @@
 # ghost-cursor-playwright
 
-Modification of actual ghost-cursor for puppeteer, with more functionality and rewrited to worth well with playwight.
+Modification of actual ghost-cursor for puppeteer, with more functionality and rewrited to work well with playwight.
 
 ### Download
 
