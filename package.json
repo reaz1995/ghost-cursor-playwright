@@ -17,7 +17,7 @@
 	],
   "scripts":{
     "build":"tsc",
-    "test":"tsc && node ./lib/test.js"
+    "example":"tsc && node ./lib/example.js"
   },
 	"dependencies": {
 		"bezier-js": "^4.1.1",
