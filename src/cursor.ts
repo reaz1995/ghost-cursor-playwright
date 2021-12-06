@@ -40,7 +40,7 @@ export interface Cursor {
 }
 export interface Actions {
 	click(options?: clickOptions): Promise<void>;
-	move(targetElem: string | BoundingBox): Promise<void>;
+	move(targetElem: string | BoundingBox, paddingPercentage?: number): Promise<void>;
 	moveTo(destination: Vector): Promise<void>;
 }
 
@@ -214,19 +214,12 @@ export class Cursor {
 		return randomPointInsideViewPort;
 	}
 
-	getRandomPointInsideElem(
-		{ x, y, width, height }: BoundingBox,
-		paddingPercentage?: number
-	): Vector {
-		let paddingWidth = 0;
-		let paddingHeight = 0;
+	getRandomPointInsideElem({ x, y, width, height }: BoundingBox, paddingPercentage = 0): Vector {
+		if (paddingPercentage < 0 && paddingPercentage > 100)
+			throw new Error('Wrong padding value, choose from scope [0-100]');
 
-		if (paddingPercentage !== undefined) {
-			if (paddingPercentage > 0 && paddingPercentage < 100) {
-				paddingWidth = (width * paddingPercentage) / 100;
-				paddingHeight = (height * paddingPercentage) / 100;
-			}
-		}
+		const paddingWidth = (width * paddingPercentage) / 100;
+		const paddingHeight = (height * paddingPercentage) / 100;
 
 		return {
 			x: x + paddingWidth / 2 + Math.random() * (width - paddingWidth),
@@ -272,26 +265,22 @@ export class Cursor {
 	}
 
 	actions: Actions = {
-		click: async (options?: clickOptions): Promise<void> => {
+		click: async ({ delay, doubleClick }: clickOptions): Promise<void> => {
 			// default values
 			let delayMin = 20,
 				delayMax = 50;
-			let doubleClick = false;
 
-			if (options.delay !== undefined) {
-				delayMin = options.delay[0];
-				delayMax = options.delay[1];
+			if (delay !== undefined) {
+				delayMin = delay[0];
+				delayMax = delay[1];
 				if (delayMin > delayMax || delayMax < 0 || delayMin < 0)
 					throw new Error('wrong delay time');
 			}
 
-			if (options.doubleClick !== undefined) {
-				doubleClick = options.doubleClick;
-			}
-
-			const delayTime = randomValue(delayMin, delayMax);
 			if (this.performRandomMoves) this.randomMove();
 			this.toggleRandomMove(false);
+
+			const delayTime = randomValue(delayMin, delayMax);
 			await this.page.mouse.down();
 			await sleep(delayTime);
 			await this.page.mouse.up();
@@ -302,11 +291,11 @@ export class Cursor {
 			this.toggleRandomMove(true);
 		},
 
-		move: async (targetElem: string | BoundingBox): Promise<void> => {
+		move: async (targetElem: string | BoundingBox, paddingPercentage = 0): Promise<void> => {
 			if (this.performRandomMoves) await this.randomMove();
 			this.toggleRandomMove(false);
 			let elemBox: BoundingBox;
-			// picking object by selector
+
 			if (typeof targetElem === 'string') {
 				const elem = await this.page.$(targetElem);
 				if (elem === null) throw new Error(`Could not find element with selector "${targetElem}"`);
@@ -316,7 +305,7 @@ export class Cursor {
 			}
 
 			const { height, width } = elemBox;
-			const destination = this.getRandomPointInsideElem(elemBox);
+			const destination = this.getRandomPointInsideElem(elemBox, paddingPercentage);
 			const boxDimension = { height, width };
 
 			const overshooting = this.shouldOvershoot(this.previous, destination);
