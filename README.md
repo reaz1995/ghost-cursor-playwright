@@ -21,6 +21,7 @@ npm run example
 for wsl2 don't forget to set up displayer
 
 ### Download as package
+
 ```
 npm i ghost-cursor-playwright
 import { createCursor } from 'ghost-cursor-playwright';
@@ -47,6 +48,6 @@ await cursor.actions.click({delay?:[number,number],doubleClick?:boolean});
 utility function to get actual mouse position on given page
 
 ```
-await getActualPosOfMouse(page);
-//will return Promise<Vector>;
+await getActualPosOfMouse(page:playwright.Page);;
+// will work only after mounting cursor;
 ```
