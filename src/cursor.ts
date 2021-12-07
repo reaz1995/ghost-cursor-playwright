@@ -239,7 +239,6 @@ export class Cursor {
 	async performRandomMove(): Promise<void> {
 		while (Math.random() > 0.7) {
       try {
-        console.log('rand')
 				const rand = await this.getRandomPointOnViewport();
 				await this.tracePath(path(this.previous, rand));
 				this.previous = rand;
