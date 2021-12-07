@@ -5,7 +5,7 @@ Note! target elements rendered in the DOM will be scrolled vertically and horizo
 
 ### Download
 
-```
+```shell
 git clone https://github.com/reaz1995/ghost-cursor-playwright.git cursor
 cd cursor
 npm install
@@ -14,16 +14,17 @@ npm install
 example of usage in src/example.ts
 to run example use
 
-```
+```shell
 npm run example
 ```
 
 for wsl2 don't forget to set up displayer
 
 ### Download as package
-
-```
+```shell
 npm i ghost-cursor-playwright
+```
+```typescript
 import { createCursor } from 'ghost-cursor-playwright';
 or
 const createCursor = require('ghost-cursor-playwright');
@@ -33,14 +34,14 @@ const createCursor = require('ghost-cursor-playwright');
 
 Create amd attach cursor to page
 
-```
+```typescript
 const cursor = await createCursor(page);
 ```
 
 manipulate the cursor via:
 Before move actions will keep performing random move (30% chance)
 
-```
+```typescript
 cursor.actions.move(moveOptions: moveOptions): Promise<void>;
 type moveOptions = {
 	targetElem: string | BoundingBox;
@@ -66,7 +67,7 @@ type clickOptions = {
 
 utility function to get actual mouse position on given page
 
-```
+```typescript
 await getActualPosOfMouse(page:playwright.Page);;
 // will work only after mounting cursor;
 ```
