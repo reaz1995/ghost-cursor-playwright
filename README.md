@@ -38,11 +38,30 @@ const cursor = await createCursor(page);
 ```
 
 manipulate the cursor via:
+Before move actions will keep performing random move (30% chance)
 
 ```
-await cursor.actions.move(target: string | BoundingBox,paddingPercentage?: number);
-await cursor.actions.moveTo(destination:Vector);
-await cursor.actions.click({delay?:[number,number],doubleClick?:boolean});
+cursor.actions.move(moveOptions: moveOptions): Promise<void>;
+type moveOptions = {
+	targetElem: string | BoundingBox;
+	paddingPercentage?: number;
+	waitForSelector?: number;
+	waitBeforeMove?: [number, number];
+};
+
+cursor.actions.moveTo(moveToOptions: moveToOptions): Promise<void>;
+type moveToOptions = {
+	destination: Vector;
+	waitBeforeMove?: [number, number];
+};
+
+cursor.actions.click(clickOptions?: clickOptions): Promise<void>;
+type clickOptions = {
+	waitBeforeClick?: [number, number];
+	waitBetweenClick?: [number, number];
+	doubleClick?: boolean;
+};
+
 ```
 
 utility function to get actual mouse position on given page

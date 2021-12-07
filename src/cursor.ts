@@ -17,16 +17,11 @@ export async function createCursor(
 
 export interface Cursor {
 	page: playwright.Page;
-	start: Vector;
 	previous: Vector;
-	actualPos: Vector;
-	moving: boolean;
-	performRandomMoves: boolean;
 	overshootSpread: number;
 	overshootRadius: number;
 	overshootThreshold: number;
 
-	toggleRandomMove(random: boolean): void;
 	shouldOvershoot(a: Vector, b: Vector): boolean;
 	getElemBoundingBox(selector: string): Promise<BoundingBox>;
 	getViewportBoundingBox(): Promise<BoundingBox>;
@@ -35,18 +30,29 @@ export interface Cursor {
 		{ x, y, width, height }: BoundingBox,
 		paddingPercentage?: number
 	): Vector;
-	tracePath(vectors: Iterable<Vector>, abortOnMove: boolean): Promise<void>;
-	randomMove(): Promise<void>;
+	tracePath(vectors: Iterable<Vector>): Promise<void>;
+	performRandomMove(): Promise<void>;
 }
 export interface Actions {
-	click(options?: clickOptions): Promise<void>;
-	move(targetElem: string | BoundingBox, paddingPercentage?: number): Promise<void>;
-	moveTo(destination: Vector): Promise<void>;
+	click(clickOptions?: clickOptions): Promise<void>;
+	move(moveOptions: moveOptions): Promise<void>;
+	moveTo(moveToOptions: moveToOptions): Promise<void>;
 }
 
 export type clickOptions = {
-	delay?: [number, number];
+	waitBeforeClick?: [number, number];
+	waitBetweenClick?: [number, number];
 	doubleClick?: boolean;
+};
+export type moveOptions = {
+	targetElem: string | BoundingBox;
+	paddingPercentage?: number;
+	waitForSelector?: number;
+	waitBeforeMove?: [number, number];
+};
+export type moveToOptions = {
+	destination: Vector;
+	waitBeforeMove?: [number, number];
 };
 
 // ---------------------------------------------------------------
@@ -97,11 +103,7 @@ export async function getActualPosOfMouse(page: playwright.Page): Promise<Vector
 
 export class Cursor {
 	page: playwright.Page;
-	start: Vector;
 	previous: Vector;
-	actualPos: Vector;
-	moving = false;
-	performRandomMoves = false;
 	overshootSpread: number;
 	overshootRadius: number;
 	overshootThreshold: number;
@@ -112,17 +114,11 @@ export class Cursor {
 		overshootSpread: number,
 		overshootRadius: number
 	) {
-		this.start = randomStartPoint;
-		this.actualPos = randomStartPoint;
 		this.previous = randomStartPoint;
 		this.overshootSpread = overshootSpread;
 		this.overshootRadius = overshootRadius;
 		this.overshootThreshold = 500;
 		this.page = page;
-	}
-
-	toggleRandomMove(random: boolean): void {
-		this.moving = !random;
 	}
 
 	shouldOvershoot(a: Vector, b: Vector): boolean {
@@ -132,7 +128,7 @@ export class Cursor {
 	async getElemBoundingBox(selector: string): Promise<BoundingBox> {
 		let viewPortBox: BoundingBox;
 		let elemBoundingBox = await (await this.page.locator(selector)).boundingBox();
-		if (elemBoundingBox === null) throw new Error('Couldnt get Element Box');
+		if (elemBoundingBox === null) throw new Error(`Selector ${selector} is not present in DOM`);
 
 		let { y: elemY, x: elemX, height: elemHeight, width: elemWidth } = elemBoundingBox;
 
@@ -143,7 +139,7 @@ export class Cursor {
 		// scroll until elem is visible
 		while (totalElemHeight > vwHeight || totalElemWidth > vwWidth || elemY < 0 || elemX < 0) {
 			elemBoundingBox = await (await this.page.locator(selector)).boundingBox();
-			if (elemBoundingBox === null) throw new Error('Couldnt get Element Box');
+			if (elemBoundingBox === null) throw new Error(`Selector ${selector} is not present in DOM`);
 
 			elemY = elemBoundingBox.y;
 			elemHeight = elemBoundingBox.height;
@@ -160,9 +156,9 @@ export class Cursor {
 
 			if (totalElemHeight <= vwHeight && elemY >= 0) break;
 			if (elemY > 0) {
-				await this.page.mouse.wheel(0, 200);
+				await this.page.mouse.wheel(0, 100);
 			} else if (elemY < 0) {
-				await this.page.mouse.wheel(0, -200);
+				await this.page.mouse.wheel(0, -100);
 			}
 
 			if (totalElemWidth <= vwWidth && elemX >= 0) break;
@@ -172,7 +168,7 @@ export class Cursor {
 				await this.page.mouse.wheel(-100, 0);
 			}
 
-			await sleep(randomValue(80, 150));
+			await sleep(randomValue(40, 80));
 		}
 		// it will only return if elem is visible on the page
 		return elemBoundingBox;
@@ -227,78 +223,74 @@ export class Cursor {
 		};
 	}
 
-	async tracePath(vectors: Iterable<Vector>, abortOnMove = false): Promise<void> {
+	async tracePath(vectors: Iterable<Vector>): Promise<void> {
 		for (const v of vectors) {
 			try {
 				// In case this is called from random mouse movements and the users wants to move the mouse, abort
-				if (abortOnMove && this.moving) {
-					return;
-				}
 				await this.page.mouse.move(v.x, v.y);
 				this.previous = v;
-			} catch (error) {
-				console.debug('Warning: could not move mouse, error message:', error);
+			} catch (error: any) {
+				console.log(error.message);
 			}
 		}
 	}
 
 	// Start random mouse movements. Function recursively calls itself
-	async randomMove(): Promise<void> {
-		try {
-			if (!this.moving) {
+	async performRandomMove(): Promise<void> {
+		while (Math.random() > 0.7) {
+      try {
+        console.log('rand')
 				const rand = await this.getRandomPointOnViewport();
-				await this.tracePath(path(this.previous, rand), true);
+				await this.tracePath(path(this.previous, rand));
 				this.previous = rand;
+				await sleep(randomValue(20, 80));
+			} catch (_) {
+				console.log('Warning: stopping random mouse movements');
 			}
-			await sleep(Math.random() * 2000); // 2s by default
-			this.randomMove().then(
-				(_) => {
-					('');
-				},
-				(_) => {
-					('');
-				}
-			); // fire and forget, recursive function
-		} catch (_) {
-			console.debug('Warning: stopping random mouse movements');
 		}
 	}
 
 	actions: Actions = {
-		click: async ({ delay, doubleClick }: clickOptions): Promise<void> => {
-			// default values
-			let delayMin = 20,
-				delayMax = 50;
+		click: async ({
+			waitBeforeClick,
+			waitBetweenClick,
+			doubleClick,
+		}: clickOptions): Promise<void> => {
+			// default
+			waitBeforeClick = waitBeforeClick || [0, 0];
+			waitBetweenClick = waitBetweenClick || [20, 50];
+			doubleClick = doubleClick || false;
 
-			if (delay !== undefined) {
-				delayMin = delay[0];
-				delayMax = delay[1];
-				if (delayMin > delayMax || delayMax < 0 || delayMin < 0)
-					throw new Error('wrong delay time');
-			}
+			await sleep(randomValue(...waitBeforeClick));
 
-			if (this.performRandomMoves) this.randomMove();
-			this.toggleRandomMove(false);
-
-			const delayTime = randomValue(delayMin, delayMax);
 			await this.page.mouse.down();
-			await sleep(delayTime);
+			await sleep(randomValue(...waitBetweenClick));
 			await this.page.mouse.up();
 
-			if (doubleClick !== undefined && doubleClick === true)
-				this.actions.click({ delay: [delayMin, delayMax] });
-
-			this.toggleRandomMove(true);
+			doubleClick && this.actions.click({ waitBetweenClick });
 		},
 
-		move: async (targetElem: string | BoundingBox, paddingPercentage = 0): Promise<void> => {
-			if (this.performRandomMoves) await this.randomMove();
-			this.toggleRandomMove(false);
-			let elemBox: BoundingBox;
+		move: async ({
+			targetElem,
+			paddingPercentage,
+			waitForSelector,
+			waitBeforeMove,
+		}: moveOptions): Promise<void> => {
+			// default
+			paddingPercentage = paddingPercentage || 0;
+			waitForSelector = waitForSelector || 30_000;
+			waitBeforeMove = waitBeforeMove || [0, 0];
 
+			await this.performRandomMove();
+			await sleep(randomValue(...waitBeforeMove));
+
+			let elemBox: BoundingBox;
 			if (typeof targetElem === 'string') {
-				const elem = await this.page.$(targetElem);
-				if (elem === null) throw new Error(`Could not find element with selector "${targetElem}"`);
+				try {
+					await this.page.waitForSelector(targetElem, { timeout: waitForSelector });
+				} catch (error) {
+					throw new Error(`Selector ${targetElem} is not present in DOM`);
+				}
 				elemBox = await this.getElemBoundingBox(targetElem);
 			} else {
 				elemBox = targetElem;
@@ -317,16 +309,16 @@ export class Cursor {
 				await this.tracePath(correction);
 			}
 			this.previous = destination;
-
-			this.toggleRandomMove(true);
 		},
 
-		moveTo: async (destination: Vector): Promise<void> => {
-			if (this.performRandomMoves) await this.randomMove();
+		moveTo: async ({ destination, waitBeforeMove }: moveToOptions): Promise<void> => {
+			// default
+			waitBeforeMove = waitBeforeMove || [0, 0];
 
-			this.toggleRandomMove(false);
-			await this.tracePath(path(await this.previous, destination));
-			this.toggleRandomMove(true);
+			await this.performRandomMove();
+			await sleep(randomValue(...waitBeforeMove));
+
+			await this.tracePath(path(this.previous, destination));
 		},
 	};
 }
