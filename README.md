@@ -21,12 +21,14 @@ npm run example
 for wsl2 don't forget to set up displayer
 
 ### Download as package
+
 ```shell
 npm i ghost-cursor-playwright
 ```
+
 ```typescript
 import { createCursor } from 'ghost-cursor-playwright';
-or
+or;
 const createCursor = require('ghost-cursor-playwright');
 ```
 
@@ -38,8 +40,9 @@ Create amd attach cursor to page
 const cursor = await createCursor(page);
 ```
 
+move actions before execute will keep performing random move (30% chance).
+
 manipulate the cursor via:
-Before move actions will keep performing random move (30% chance)
 
 ```typescript
 cursor.actions.move(moveOptions: moveOptions): Promise<void>;
