@@ -68,10 +68,18 @@ type clickOptions = {
 ```
 
 util functions
+
 ```typescript
 // actual position of cursor is mounted on window.mousePos, its value can be retrieve by
   cursor.getActualPosOfMouse(): Promise<Vector>;
 
 // actual target of cursor is mounted on window.mouseTarget, to compare target under cursor with given JS PATH selector use:
   cursor.compareTargetOfMouse(selector: string): Promise<boolean>
+
+// random Vector of element
+  cursor.getElemBoundingBox(selector: string): Promise<BoundingBox>
+  cursor.getRandomPointInsideElem(elemBoundingBox: BoundingBox, paddingPercentage?): Vector
+
+// random Vector of viewport
+  cursor.getRandomPointOnViewport(paddingPercentage?): Promise<Vector>
 ```

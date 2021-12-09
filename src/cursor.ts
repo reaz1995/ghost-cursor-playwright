@@ -260,7 +260,8 @@ export class Cursor {
 				});
 			});
 		});
-	}
+  }
+
 	async addMouseTargetTracker(): Promise<void> {
 		this.page.on('load', async () => {
 			/*
@@ -281,7 +282,8 @@ export class Cursor {
 			await this.page.evaluate(() => JSON.stringify(window['mousePos']))
 		) as Vector;
 		return actualPos;
-	}
+  }
+  
 	async compareTargetOfMouse(selector: string): Promise<boolean> {
 		const isEqual = await this.page.evaluate((selector: string) => {
 			const actualTarget = window['mouseTarget'] as HTMLElement;

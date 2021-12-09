@@ -13,13 +13,12 @@ import { Vector } from './math';
 		});
 
 		const page = await browserContext.newPage();
-		const cursor = await createCursor(page );
+		const cursor = await createCursor(page);
 		await page.goto('https://www.google.com');
 
-		let randomPoint: Vector;
+		const randomPoint = await cursor.getRandomPointOnViewport();
 
 		await page.waitForTimeout(5000);
-		randomPoint = await cursor.getRandomPointOnViewport();
 		await cursor.actions.move(randomPoint);
 
 		await cursor.actions.move({ x: 70, y: 70 });
