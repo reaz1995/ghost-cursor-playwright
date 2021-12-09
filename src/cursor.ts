@@ -3,16 +3,31 @@ import { Vector, direction, magnitude, overshoot, path, BoundingBox } from './ma
 import installMouseHelper from './mouse-helper';
 import { sleep, randomValue } from './utils';
 
-export async function createCursor(
+export type createCursorOptions = {
+	page: playwright.Page;
+	overshootSpread?: number;
+	overshootRadius?: number;
+	debug?: true;
+};
+
+export async function createCursor({
 	page,
-	overshootSpread = 10,
-	overshootRadius = 120,
-	debug = true
-) {
+	overshootSpread,
+	overshootRadius,
+	debug,
+}: createCursorOptions) {
+	// defaults
+	overshootSpread = overshootSpread || 10;
+	overshootRadius = overshootRadius || 120;
+	debug = debug || true;
+
 	if (debug) await installMouseHelper(page);
-	await addMousePositionTracker(page);
 	const randomStartPoint = await getRandomStartPoint(page);
-	return new Cursor(page, randomStartPoint, overshootSpread, overshootRadius);
+	const cursor = new Cursor(page, randomStartPoint, overshootSpread, overshootRadius);
+	await cursor.addMousePositionTracker();
+	await cursor.addMouseTargetTracker();
+
+	return cursor;
 }
 
 export interface Cursor {
@@ -32,26 +47,29 @@ export interface Cursor {
 	): Vector;
 	tracePath(vectors: Iterable<Vector>): Promise<void>;
 	performRandomMove(): Promise<void>;
+
+	addMousePositionTracker(): Promise<void>;
+	addMouseTargetTracker(): Promise<void>;
+	getActualPosOfMouse(): Promise<Vector>;
+	compareTargetOfMouse(selector: string): Promise<boolean>;
 }
 export interface Actions {
-	click(clickOptions?: clickOptions): Promise<void>;
+	click(clickOptions?: clickOptions, moveOptions?: Omit<moveOptions, 'target'>): Promise<void>;
+	justClick(waitBetweenClick?: [number, number], doubleClick?: boolean): Promise<void>;
 	move(moveOptions: moveOptions): Promise<void>;
-	moveTo(moveToOptions: moveToOptions): Promise<void>;
 }
 
 export type clickOptions = {
+	target?: string;
 	waitBeforeClick?: [number, number];
 	waitBetweenClick?: [number, number];
 	doubleClick?: boolean;
 };
+
 export type moveOptions = {
-	targetElem: string | BoundingBox;
+	target: string | BoundingBox | Vector;
 	paddingPercentage?: number;
 	waitForSelector?: number;
-	waitBeforeMove?: [number, number];
-};
-export type moveToOptions = {
-	destination: Vector;
 	waitBeforeMove?: [number, number];
 };
 
@@ -76,29 +94,6 @@ export async function getRandomStartPoint(page: playwright.Page) {
 	return randomStartPoint;
 }
 
-export async function addMousePositionTracker(page: playwright.Page) {
-	page.on('load', async () => {
-		/*
-		 * add global variable mousePos to page with init mouse position
-		 * add event listener for mousemove which update mousePos
-		 */
-		await page.evaluate(() => {
-			(window as any).mousePos = { x: 0, y: 0 };
-			document.addEventListener('mousemove', (e) => {
-				const { clientX, clientY } = e;
-				(window as any).mousePos.x = clientX;
-				(window as any).mousePos.y = clientY;
-			});
-		});
-	});
-}
-
-export async function getActualPosOfMouse(page: playwright.Page): Promise<Vector> {
-	const actualPos = JSON.parse(
-		await page.evaluate(() => JSON.stringify(window['mousePos']))
-	) as Vector;
-	return actualPos;
-}
 // ----------------------------------------------------------------------------------
 
 export class Cursor {
@@ -238,7 +233,7 @@ export class Cursor {
 	// Start random mouse movements. Function recursively calls itself
 	async performRandomMove(): Promise<void> {
 		while (Math.random() > 0.7) {
-      try {
+			try {
 				const rand = await this.getRandomPointOnViewport();
 				await this.tracePath(path(this.previous, rand));
 				this.previous = rand;
@@ -249,33 +244,91 @@ export class Cursor {
 		}
 	}
 
+	async addMousePositionTracker(): Promise<void> {
+		this.page.on('load', async () => {
+			/*
+			 * add global variable mousePos to page with init mouse position
+			 * add event listener for mousemove which update mousePos
+			 */
+			await this.page.evaluate(() => {
+				(window as any).mousePos = { x: 0, y: 0 };
+				document.addEventListener('mousemove', (e) => {
+					const { clientX, clientY } = e;
+					(window as any).mousePos.x = clientX;
+					(window as any).mousePos.y = clientY;
+				});
+			});
+		});
+	}
+	async addMouseTargetTracker(): Promise<void> {
+		this.page.on('load', async () => {
+			/*
+			 * add global variable mouseTarget to page
+			 * add event listener for mousemove which update mouseTarget
+			 */
+			await this.page.evaluate(() => {
+				(window as any).mouseTarget = '';
+				document.addEventListener('mousemove', (e) => {
+					(window as any).mouseTarget = e.target;
+				});
+			});
+		});
+	}
+
+	async getActualPosOfMouse(): Promise<Vector> {
+		const actualPos = JSON.parse(
+			await this.page.evaluate(() => JSON.stringify(window['mousePos']))
+		) as Vector;
+		return actualPos;
+	}
+	async compareTargetOfMouse(selector: string): Promise<boolean> {
+		const isEqual = await this.page.evaluate((selector: string) => {
+			const actualTarget = window['mouseTarget'] as HTMLElement;
+			const selectedTarget = document.querySelector(selector);
+			const isEqual = actualTarget.isEqualNode(selectedTarget);
+			return isEqual;
+		}, selector);
+		return isEqual;
+	}
+
 	actions: Actions = {
-		click: async ({
-			waitBeforeClick,
-			waitBetweenClick,
-			doubleClick,
-		}: clickOptions): Promise<void> => {
-			// default
+		click: async (
+			{ target, waitBeforeClick, waitBetweenClick, doubleClick }: clickOptions,
+			moveOptions: Omit<moveOptions, 'target'>
+		): Promise<void> => {
+			// defaults
 			waitBeforeClick = waitBeforeClick || [0, 0];
 			waitBetweenClick = waitBetweenClick || [20, 50];
 			doubleClick = doubleClick || false;
 
+			// move before click if target is given
+			target && (await this.actions.move({ target, ...moveOptions }));
+			let correctTarget =
+				typeof target === 'string' ? await this.compareTargetOfMouse(target) : false;
+
 			await sleep(randomValue(...waitBeforeClick));
 
+			(target && correctTarget) || typeof target !== 'string'
+				? await this.actions.justClick(waitBetweenClick, doubleClick)
+				: doubleClick
+				? this.page.click(target, { clickCount: 2, delay: randomValue(...waitBetweenClick) })
+				: this.page.click(target, { delay: randomValue(...waitBetweenClick) });
+		},
+
+		justClick: async (waitBetweenClick = [20, 50], doubleClick = false): Promise<void> => {
 			await this.page.mouse.down();
 			await sleep(randomValue(...waitBetweenClick));
 			await this.page.mouse.up();
-
-			doubleClick && this.actions.click({ waitBetweenClick });
+			doubleClick && (await this.actions.justClick());
 		},
 
 		move: async ({
-			targetElem,
+			target,
 			paddingPercentage,
 			waitForSelector,
 			waitBeforeMove,
 		}: moveOptions): Promise<void> => {
-			// default
+			// defaults
 			paddingPercentage = paddingPercentage || 0;
 			waitForSelector = waitForSelector || 30_000;
 			waitBeforeMove = waitBeforeMove || [0, 0];
@@ -283,41 +336,42 @@ export class Cursor {
 			await this.performRandomMove();
 			await sleep(randomValue(...waitBeforeMove));
 
-			let elemBox: BoundingBox;
-			if (typeof targetElem === 'string') {
-				try {
-					await this.page.waitForSelector(targetElem, { timeout: waitForSelector });
-				} catch (error) {
-					throw new Error(`Selector ${targetElem} is not present in DOM`);
-				}
-				elemBox = await this.getElemBoundingBox(targetElem);
+			if (instanceOfVector(target)) {
+				const destination = target as Vector;
+				await this.tracePath(path(this.previous, destination));
+				this.previous = destination;
 			} else {
-				elemBox = targetElem;
+				let elemBox: BoundingBox;
+				if (typeof target === 'string') {
+					try {
+						await this.page.waitForSelector(target, { timeout: waitForSelector });
+					} catch (error) {
+						throw new Error(`Selector ${target} is not present in DOM`);
+					}
+					elemBox = await this.getElemBoundingBox(target);
+				} else {
+					elemBox = target as BoundingBox;
+				}
+
+				const { height, width } = elemBox;
+				const destination = this.getRandomPointInsideElem(elemBox, paddingPercentage);
+				const boxDimension = { height, width };
+
+				const overshooting = this.shouldOvershoot(this.previous, destination);
+				const to = overshooting ? overshoot(destination, this.overshootRadius) : destination;
+				await this.tracePath(path(this.previous, to));
+
+				if (overshooting) {
+					const correction = path(to, { ...boxDimension, ...destination }, this.overshootSpread);
+					await this.tracePath(correction);
+				}
+				this.previous = destination;
 			}
-
-			const { height, width } = elemBox;
-			const destination = this.getRandomPointInsideElem(elemBox, paddingPercentage);
-			const boxDimension = { height, width };
-
-			const overshooting = this.shouldOvershoot(this.previous, destination);
-			const to = overshooting ? overshoot(destination, this.overshootRadius) : destination;
-			await this.tracePath(path(this.previous, to));
-
-			if (overshooting) {
-				const correction = path(to, { ...boxDimension, ...destination }, this.overshootSpread);
-				await this.tracePath(correction);
-			}
-			this.previous = destination;
-		},
-
-		moveTo: async ({ destination, waitBeforeMove }: moveToOptions): Promise<void> => {
-			// default
-			waitBeforeMove = waitBeforeMove || [0, 0];
-
-			await this.performRandomMove();
-			await sleep(randomValue(...waitBeforeMove));
-
-			await this.tracePath(path(this.previous, destination));
 		},
 	};
+}
+
+function instanceOfVector(object: any): boolean {
+	if (typeof object === 'string') return false;
+	return 'x' in object && 'y' in object && Object.keys(object).length === 2 ? true : false;
 }
