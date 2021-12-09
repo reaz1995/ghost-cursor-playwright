@@ -18,7 +18,7 @@ to run example use
 npm run example
 ```
 
-for wsl2 don't forget to set up displayer
+for wsl2 don't forget to set up display
 
 ### Download as package
 
@@ -40,37 +40,38 @@ Create amd attach cursor to page
 const cursor = await createCursor(page);
 ```
 
-move actions before execute will keep performing random move (30% chance).
-
 manipulate the cursor via:
 
 ```typescript
-cursor.actions.move(moveOptions: moveOptions): Promise<void>;
+//move actions before execute will keep performing random move (30% chance).
+cursor.actions.move(target: string | BoundingBox | Vector, moveOptions?: moveOptions): Promise<void>;
+
 type moveOptions = {
-	targetElem: string | BoundingBox;
 	paddingPercentage?: number;
 	waitForSelector?: number;
 	waitBeforeMove?: [number, number];
 };
 
-cursor.actions.moveTo(moveToOptions: moveToOptions): Promise<void>;
-type moveToOptions = {
-	destination: Vector;
-	waitBeforeMove?: [number, number];
-};
 
-cursor.actions.click(clickOptions?: clickOptions): Promise<void>;
+cursor.actions.click(clickOptions?: clickOptions, moveOptions?: moveOptions): Promise<void>;
+
 type clickOptions = {
+	target?: string | BoundingBox | Vector;
 	waitBeforeClick?: [number, number];
 	waitBetweenClick?: [number, number];
 	doubleClick?: boolean;
 };
+// if target is given then cursor will use move function before click
+// if target is JS path string, then function will check if for sure is on correct target (sometimes rendered objects are covered in viewport by menu bar or dialogs etc.), if false will proceed fallback to native click
+
 
 ```
 
-utility function to get actual mouse position on given page
-
+util functions
 ```typescript
-await getActualPosOfMouse(page:playwright.Page);;
-// will work only after mounting cursor;
+// actual position of cursor is mounted on window.mousePos, its value can be retrieve by
+  cursor.getActualPosOfMouse(): Promise<Vector>;
+
+// actual target of cursor is mounted on window.mouseTarget, to compare target under cursor with given JS PATH selector use:
+  cursor.compareTargetOfMouse(selector: string): Promise<boolean>
 ```

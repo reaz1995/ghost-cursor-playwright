@@ -4,22 +4,25 @@ import installMouseHelper from './mouse-helper';
 import { sleep, randomValue } from './utils';
 
 export type createCursorOptions = {
-	page: playwright.Page;
 	overshootSpread?: number;
 	overshootRadius?: number;
 	debug?: true;
 };
 
-export async function createCursor({
-	page,
-	overshootSpread,
-	overshootRadius,
-	debug,
-}: createCursorOptions) {
+export async function createCursor(
+	page: playwright.Page,
+	createCursorOptions?: createCursorOptions
+) {
 	// defaults
-	overshootSpread = overshootSpread || 10;
-	overshootRadius = overshootRadius || 120;
-	debug = debug || true;
+	let overshootSpread = 10,
+		overshootRadius = 120,
+		debug = true;
+
+	if (createCursorOptions !== undefined) {
+		overshootSpread = createCursorOptions.overshootSpread || 10;
+		overshootRadius = createCursorOptions.overshootRadius || 120;
+		debug = createCursorOptions.debug || true;
+	}
 
 	if (debug) await installMouseHelper(page);
 	const randomStartPoint = await getRandomStartPoint(page);
@@ -54,20 +57,18 @@ export interface Cursor {
 	compareTargetOfMouse(selector: string): Promise<boolean>;
 }
 export interface Actions {
-	click(clickOptions?: clickOptions, moveOptions?: Omit<moveOptions, 'target'>): Promise<void>;
-	justClick(waitBetweenClick?: [number, number], doubleClick?: boolean): Promise<void>;
-	move(moveOptions: moveOptions): Promise<void>;
+	click(clickOptions?: clickOptions, moveOptions?: moveOptions): Promise<void>;
+	move(target: string | BoundingBox | Vector, moveOptions?: moveOptions): Promise<void>;
 }
 
 export type clickOptions = {
-	target?: string;
+	target?: string | BoundingBox | Vector;
 	waitBeforeClick?: [number, number];
 	waitBetweenClick?: [number, number];
 	doubleClick?: boolean;
 };
 
 export type moveOptions = {
-	target: string | BoundingBox | Vector;
 	paddingPercentage?: number;
 	waitForSelector?: number;
 	waitBeforeMove?: [number, number];
@@ -292,46 +293,67 @@ export class Cursor {
 	}
 
 	actions: Actions = {
-		click: async (
-			{ target, waitBeforeClick, waitBetweenClick, doubleClick }: clickOptions,
-			moveOptions: Omit<moveOptions, 'target'>
-		): Promise<void> => {
+		click: async (clickOptions: clickOptions, moveOptions: moveOptions): Promise<void> => {
 			// defaults
-			waitBeforeClick = waitBeforeClick || [0, 0];
-			waitBetweenClick = waitBetweenClick || [20, 50];
-			doubleClick = doubleClick || false;
+			let waitBeforeClick: [number, number] = [0, 0],
+				waitBetweenClick: [number, number] = [20, 50],
+				doubleClick = false,
+				target = undefined;
+
+			if (clickOptions !== undefined) {
+				waitBeforeClick = clickOptions.waitBeforeClick || [0, 0];
+				waitBetweenClick = clickOptions.waitBetweenClick || [20, 50];
+				doubleClick = clickOptions.doubleClick || false;
+				target = clickOptions.target || undefined;
+			}
+
+			// utils
+			const justClick = async (
+				waitBetweenClick = [20, 50] as [number, number],
+				doubleClick = false
+			): Promise<void> => {
+				await this.page.mouse.down();
+				await sleep(randomValue(...waitBetweenClick));
+				await this.page.mouse.up();
+				doubleClick && (await justClick());
+			};
 
 			// move before click if target is given
-			target && (await this.actions.move({ target, ...moveOptions }));
+			target && (await this.actions.move(target, { ...moveOptions }));
 			let correctTarget =
 				typeof target === 'string' ? await this.compareTargetOfMouse(target) : false;
 
 			await sleep(randomValue(...waitBeforeClick));
 
-			(target && correctTarget) || typeof target !== 'string'
-				? await this.actions.justClick(waitBetweenClick, doubleClick)
-				: doubleClick
-				? this.page.click(target, { clickCount: 2, delay: randomValue(...waitBetweenClick) })
-				: this.page.click(target, { delay: randomValue(...waitBetweenClick) });
+			/*
+      check if cursor is on correct target (support only for JS PATH)
+        if its on wrong target then proceed fallback (native playwright click),
+        in every other cases dispatch events mousedown and mouseup
+      */
+
+			if (typeof target !== 'string' || correctTarget) {
+				await justClick(waitBetweenClick, doubleClick);
+			} else {
+				doubleClick
+					? await this.page.click(target, {
+							clickCount: 2,
+							delay: randomValue(...waitBetweenClick),
+					  })
+					: await this.page.click(target, { delay: randomValue(...waitBetweenClick) });
+			}
 		},
 
-		justClick: async (waitBetweenClick = [20, 50], doubleClick = false): Promise<void> => {
-			await this.page.mouse.down();
-			await sleep(randomValue(...waitBetweenClick));
-			await this.page.mouse.up();
-			doubleClick && (await this.actions.justClick());
-		},
-
-		move: async ({
-			target,
-			paddingPercentage,
-			waitForSelector,
-			waitBeforeMove,
-		}: moveOptions): Promise<void> => {
+		move: async (target, moveOptions: moveOptions): Promise<void> => {
 			// defaults
-			paddingPercentage = paddingPercentage || 0;
-			waitForSelector = waitForSelector || 30_000;
-			waitBeforeMove = waitBeforeMove || [0, 0];
+			let paddingPercentage = 0,
+				waitForSelector = 30_000,
+				waitBeforeMove: [number, number] = [0, 0];
+
+			if (moveOptions !== undefined) {
+				paddingPercentage = moveOptions.paddingPercentage || 0;
+				waitForSelector = moveOptions.waitForSelector || 30_000;
+				waitBeforeMove = moveOptions.waitBeforeMove || [0, 0];
+			}
 
 			await this.performRandomMove();
 			await sleep(randomValue(...waitBeforeMove));
