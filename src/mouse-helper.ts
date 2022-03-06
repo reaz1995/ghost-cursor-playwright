@@ -1,4 +1,4 @@
-import playwright from 'playwright';
+import playwright from 'playwright-core';
 // This injects a box into the page that moves with the mouse;
 // Useful for debugging
 // Will be reattached every page load

@@ -1,4 +1,4 @@
-import { chromium } from 'playwright';
+import { chromium } from 'playwright-core';
 import { createCursor } from './cursor';
 import { Vector } from './math';
 
