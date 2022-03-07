@@ -24,7 +24,7 @@ export async function createCursor(
 		debug = createCursorOptions.debug || true;
 	}
 
-	if (debug) await installMouseHelper(page);
+	if (debug) installMouseHelper(page);
 	const randomStartPoint = await getRandomStartPoint(page);
 	const cursor = new Cursor(page, randomStartPoint, overshootSpread, overshootRadius);
 	cursor.addMousePositionTracker();
@@ -246,7 +246,7 @@ export class Cursor {
 	}
 
 	addMousePositionTracker(): void {
-		this.page.on('load', async () => {
+		this.page.on('load', () => {
 			/*
 			 * add global variable mousePos to page with init mouse position
 			 * add event listener for mousemove which update mousePos
@@ -263,7 +263,7 @@ export class Cursor {
   }
 
 	addMouseTargetTracker(): void {
-		this.page.on('load', async () => {
+		this.page.on('load', () => {
 			/*
 			 * add global variable mouseTarget to page
 			 * add event listener for mousemove which update mouseTarget

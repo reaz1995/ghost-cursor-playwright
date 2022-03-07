@@ -2,9 +2,9 @@ import playwright from 'playwright-core';
 // This injects a box into the page that moves with the mouse;
 // Useful for debugging
 // Will be reattached every page load
-async function installMouseHelper(page: playwright.Page): Promise<void> {
-	page.on('load', async () => {
-	await	page.evaluate(() => {
+function installMouseHelper(page: playwright.Page): void {
+	page.on('load', () => {
+		page.evaluate(() => {
 			const box = document.createElement('p-mouse-pointer');
 			const styleElement = document.createElement('style');
 			styleElement.innerHTML = `
@@ -100,7 +100,7 @@ async function installMouseHelper(page: playwright.Page): Promise<void> {
 					box.classList.toggle('button-' + String(i), buttons & (1 << i));
 				}
 			}
-		});
+		}).catch(() => {});
 	});
 }
 
