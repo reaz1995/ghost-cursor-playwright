@@ -16,6 +16,7 @@
 		"lib/**/*"
 	],
 	"scripts": {
+		"postinstall": "npm run build",
 		"build": "tsc",
 		"example": "tsc && node ./lib/example.js"
 	},
