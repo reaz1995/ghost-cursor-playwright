@@ -1,4 +1,4 @@
-import playwright from 'playwright';
+import playwright from 'playwright-core';
 import { Vector, direction, magnitude, overshoot, path, BoundingBox } from './math';
 import installMouseHelper from './mouse-helper';
 import { sleep, randomValue } from './utils';
@@ -24,11 +24,11 @@ export async function createCursor(
 		debug = createCursorOptions.debug || true;
 	}
 
-	if (debug) await installMouseHelper(page);
+	if (debug) installMouseHelper(page);
 	const randomStartPoint = await getRandomStartPoint(page);
 	const cursor = new Cursor(page, randomStartPoint, overshootSpread, overshootRadius);
-	await cursor.addMousePositionTracker();
-	await cursor.addMouseTargetTracker();
+	cursor.addMousePositionTracker();
+	cursor.addMouseTargetTracker();
 
 	return cursor;
 }
@@ -51,8 +51,8 @@ export interface Cursor {
 	tracePath(vectors: Iterable<Vector>): Promise<void>;
 	performRandomMove(): Promise<void>;
 
-	addMousePositionTracker(): Promise<void>;
-	addMouseTargetTracker(): Promise<void>;
+	addMousePositionTracker(): void;
+	addMouseTargetTracker(): void;
 	getActualPosOfMouse(): Promise<Vector>;
 	compareTargetOfMouse(selector: string): Promise<boolean>;
 }
@@ -245,35 +245,35 @@ export class Cursor {
 		}
 	}
 
-	async addMousePositionTracker(): Promise<void> {
-		this.page.on('load', async () => {
+	addMousePositionTracker(): void {
+		this.page.on('load', () => {
 			/*
 			 * add global variable mousePos to page with init mouse position
 			 * add event listener for mousemove which update mousePos
 			 */
-			await this.page.evaluate(() => {
+			this.page.evaluate(() => {
 				(window as any).mousePos = { x: 0, y: 0 };
 				document.addEventListener('mousemove', (e) => {
 					const { clientX, clientY } = e;
 					(window as any).mousePos.x = clientX;
 					(window as any).mousePos.y = clientY;
 				});
-			});
+			}).catch(() => {});
 		});
   }
 
-	async addMouseTargetTracker(): Promise<void> {
-		this.page.on('load', async () => {
+	addMouseTargetTracker(): void {
+		this.page.on('load', () => {
 			/*
 			 * add global variable mouseTarget to page
 			 * add event listener for mousemove which update mouseTarget
 			 */
-			await this.page.evaluate(() => {
+			this.page.evaluate(() => {
 				(window as any).mouseTarget = '';
 				document.addEventListener('mousemove', (e) => {
 					(window as any).mouseTarget = e.target;
 				});
-			});
+			}).catch(() => {});
 		});
 	}
 
