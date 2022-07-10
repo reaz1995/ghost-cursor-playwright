@@ -6,7 +6,7 @@ import { sleep, randomValue } from './utils';
 export type createCursorOptions = {
 	overshootSpread?: number;
 	overshootRadius?: number;
-	debug?: true;
+	debug?: boolean;
 };
 
 export async function createCursor(
