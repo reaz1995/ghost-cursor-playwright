@@ -29,7 +29,7 @@ npm i ghost-cursor-playwright
 ```typescript
 import { createCursor } from 'ghost-cursor-playwright';
 or;
-const createCursor = require('ghost-cursor-playwright');
+const { createCursor } = require('ghost-cursor-playwright');
 ```
 
 ### How to use
