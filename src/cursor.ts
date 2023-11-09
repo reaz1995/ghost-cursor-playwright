@@ -19,9 +19,9 @@ export async function createCursor(
 		debug = true;
 
 	if (createCursorOptions !== undefined) {
-		overshootSpread = createCursorOptions.overshootSpread || 10;
-		overshootRadius = createCursorOptions.overshootRadius || 120;
-		debug = createCursorOptions.debug || true;
+		overshootSpread = createCursorOptions.overshootSpread ?? 10;
+		overshootRadius = createCursorOptions.overshootRadius ?? 120;
+		debug = createCursorOptions.debug ?? true;
 	}
 
 	if (debug) installMouseHelper(page);
