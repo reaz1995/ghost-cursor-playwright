@@ -21,8 +21,10 @@
     "example": "tsc && node ./lib/example.js"
   },
   "dependencies": {
+    "@types/trusted-types": "^2.0.7",
     "bezier-js": "^4.1.1",
-    "playwright-core": "^1.19.2"
+    "playwright-core": "^1.19.2",
+    "trusted-types": "^2.0.0"
   },
   "devDependencies": {
     "@types/bezier-js": "^4.1.0",

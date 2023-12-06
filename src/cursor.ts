@@ -2,6 +2,7 @@ import playwright from 'playwright-core';
 import { Vector, direction, magnitude, overshoot, path, BoundingBox } from './math';
 import installMouseHelper from './mouse-helper';
 import { sleep, randomValue } from './utils';
+import { trustedTypes } from 'trusted-types';
 
 export type createCursorOptions = {
 	overshootSpread?: number;
@@ -24,7 +25,8 @@ export async function createCursor(
 		debug = createCursorOptions.debug ?? true;
 	}
 
-	if (debug) installMouseHelper(page);
+
+	if (debug) installMouseHelper(page,trustedTypes);
 	const randomStartPoint = await getRandomStartPoint(page);
 	const cursor = new Cursor(page, randomStartPoint, overshootSpread, overshootRadius);
 	cursor.addMousePositionTracker();
