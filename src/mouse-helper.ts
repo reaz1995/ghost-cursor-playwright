@@ -1,13 +1,17 @@
-import playwright from 'playwright-core';
+import playwright from "playwright-core";
 // This injects a box into the page that moves with the mouse;
 // Useful for debugging
 // Will be reattached every page load
-function installMouseHelper(page: playwright.Page): void {
-	page.on('load', () => {
-		page.evaluate(() => {
-			const box = document.createElement('p-mouse-pointer');
-			const styleElement = document.createElement('style');
-			styleElement.innerHTML = `
+function installMouseHelper(page: playwright.Page,trustedTypes:any): void {
+  page.on("load", () => {
+    page
+      .evaluate(() => {
+        window["escapeHTMLPolicy"] = trustedTypes.createPolicy("forceInner", {
+          createHTML: (to_escape: any) => to_escape,
+        });
+        const box = document.createElement("p-mouse-pointer");
+        const styleElement = document.createElement("style");
+        styleElement.innerHTML = window["escapeHTMLPolicy"].createHTML(`
           p-mouse-pointer {
             pointer-events: none;
             position: absolute;
@@ -46,62 +50,65 @@ function installMouseHelper(page: playwright.Page): void {
           p-mouse-pointer-hide {
             display: none
           }
-        `;
-			document.head.appendChild(styleElement);
-			document.body.appendChild(box);
-			document.addEventListener(
-				'mousemove',
-				(event) => {
-					box.style.left = String(event.pageX) + 'px';
-					box.style.top = String(event.pageY) + 'px';
-					box.classList.remove('p-mouse-pointer-hide');
-					updateButtons(event.buttons);
-				},
-				true
-			);
-			document.addEventListener(
-				'mousedown',
-        ( event ) => {
-					updateButtons(event.buttons);
-					box.classList.add('button-' + String(event.which));
-					box.classList.remove('p-mouse-pointer-hide');
-				},
-				true
-			);
-			document.addEventListener(
-				'mouseup',
-				(event) => {
-					updateButtons(event.buttons);
-					box.classList.remove('button-' + String(event.which));
-					box.classList.remove('p-mouse-pointer-hide');
-				},
-				true
-			);
-			document.addEventListener(
-				'mouseleave',
-				(event) => {
-					updateButtons(event.buttons);
-					box.classList.add('p-mouse-pointer-hide');
-				},
-				true
-			);
-			document.addEventListener(
-				'mouseenter',
-				(event) => {
-					updateButtons(event.buttons);
-					box.classList.remove('p-mouse-pointer-hide');
-				},
-				true
-			);
-			/* eslint-disable */
-			function updateButtons(buttons) {
-				for (let i = 0; i < 5; i++) {
-					// @ts-ignore
-					box.classList.toggle('button-' + String(i), buttons & (1 << i));
-				}
-			}
-		}).catch(() => {});
-	});
+        `);
+        document.head.appendChild(styleElement);
+        console.log(styleElement);
+        console.log("as");
+        document.body.appendChild(box);
+        document.addEventListener(
+          "mousemove",
+          (event) => {
+            box.style.left = String(event.pageX) + "px";
+            box.style.top = String(event.pageY) + "px";
+            box.classList.remove("p-mouse-pointer-hide");
+            updateButtons(event.buttons);
+          },
+          true,
+        );
+        document.addEventListener(
+          "mousedown",
+          (event) => {
+            updateButtons(event.buttons);
+            box.classList.add("button-" + String(event.which));
+            box.classList.remove("p-mouse-pointer-hide");
+          },
+          true,
+        );
+        document.addEventListener(
+          "mouseup",
+          (event) => {
+            updateButtons(event.buttons);
+            box.classList.remove("button-" + String(event.which));
+            box.classList.remove("p-mouse-pointer-hide");
+          },
+          true,
+        );
+        document.addEventListener(
+          "mouseleave",
+          (event) => {
+            updateButtons(event.buttons);
+            box.classList.add("p-mouse-pointer-hide");
+          },
+          true,
+        );
+        document.addEventListener(
+          "mouseenter",
+          (event) => {
+            updateButtons(event.buttons);
+            box.classList.remove("p-mouse-pointer-hide");
+          },
+          true,
+        );
+        /* eslint-disable */
+        function updateButtons(buttons) {
+          for (let i = 0; i < 5; i++) {
+            // @ts-ignore
+            box.classList.toggle("button-" + String(i), buttons & (1 << i));
+          }
+        }
+      })
+      .catch(() => {});
+  });
 }
 
 export default installMouseHelper;
