@@ -74,6 +74,7 @@ export type moveOptions = {
 	paddingPercentage?: number;
 	waitForSelector?: number;
 	waitBeforeMove?: [number, number];
+	bypassRandomMove?: boolean;
 };
 
 // ---------------------------------------------------------------
@@ -351,15 +352,17 @@ export class Cursor {
 			// defaults
 			let paddingPercentage = 0,
 				waitForSelector = 30_000,
-				waitBeforeMove: [number, number] = [0, 0];
+				waitBeforeMove: [number, number] = [0, 0],
+				bypassRandomMove = false;
 
 			if (moveOptions !== undefined) {
 				paddingPercentage = moveOptions.paddingPercentage || 0;
 				waitForSelector = moveOptions.waitForSelector || 30_000;
 				waitBeforeMove = moveOptions.waitBeforeMove || [0, 0];
+				bypassRandomMove = moveOptions.bypassRandomMove || false;
 			}
 
-			await this.performRandomMove();
+			if (!bypassRandomMove) await this.performRandomMove();
 			await sleep(randomValue(...waitBeforeMove));
 
 			if (instanceOfVector(target)) {
