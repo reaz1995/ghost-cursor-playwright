@@ -51,7 +51,7 @@ export interface Cursor {
 		paddingPercentage?: number
 	): Vector;
 	tracePath(vectors: Iterable<Vector>): Promise<void>;
-	performRandomMove(): Promise<void>;
+	performRandomMove(value?:number): Promise<void>;
 
 	addMousePositionTracker(): void;
 	addMouseTargetTracker(): void;
@@ -234,8 +234,9 @@ export class Cursor {
 	}
 
 	// Start random mouse movements. Function recursively calls itself
-	async performRandomMove(): Promise<void> {
-		while (Math.random() > 0.7) {
+	async performRandomMove(value?:number): Promise<void> {
+    value?value = 0.7:0;
+		while (Math.random() > value) {
 			try {
 				const rand = await this.getRandomPointOnViewport();
 				await this.tracePath(path(this.previous, rand));
@@ -359,7 +360,6 @@ export class Cursor {
 				waitBeforeMove = moveOptions.waitBeforeMove || [0, 0];
 			}
 
-			await this.performRandomMove();
 			await sleep(randomValue(...waitBeforeMove));
 
 			if (instanceOfVector(target)) {
