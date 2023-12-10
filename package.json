@@ -9,7 +9,7 @@
     "mouse-movement",
     "botting"
   ],
-  "author": "reaz",
+  "author": "reaz & avilabs",
   "license": "MIT",
   "files": [
     "lib/**/*"
