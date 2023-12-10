@@ -1,6 +1,6 @@
 {
   "name": "@avilabs/ghost-cursor-playwright",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Move your mouse like a human in playwright or generate realistic movements on any 2D plane",
   "main": "lib/cursor.js",
   "types": "lib/cursor.d.ts",
