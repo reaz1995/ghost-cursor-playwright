@@ -43,7 +43,6 @@ const cursor = await createCursor(page);
 manipulate the cursor via:
 
 ```typescript
-//move actions before execute will keep performing random move (30% chance).
 cursor.actions.move(target: string | BoundingBox | Vector, moveOptions?: moveOptions): Promise<void>;
 
 type moveOptions = {
