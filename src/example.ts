@@ -26,6 +26,8 @@ import { Vector } from './math';
 		await cursor.actions.move({ x: 50, y: 10 });
 		await cursor.actions.move('#L2AGLb > div', { paddingPercentage: 30 });
 		await cursor.actions.move(randomPoint);
+		await cursor.actions.randomMove();
+		await cursor.actions.randomMove(0.7); // 0 - 1 / 1 mean dissable
 		await cursor.actions.move('#L2AGLb > div', {
 			paddingPercentage: 50,
 			waitBeforeMove: [1_000, 2_000],
