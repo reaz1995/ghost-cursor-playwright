@@ -5,7 +5,9 @@
   "repository": "https://github.com/reaz1995/ghost-cursor-playwright",
   "main": "lib/cursor.js",
   "types": "lib/cursor.d.ts",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "keywords": [
     "bezier-curve",
     "mouse-movement",
@@ -32,5 +34,9 @@
     "@types/bezier-js": "^4.1.3",
     "@types/node": "^20.19.43",
     "typescript": "^7.0.2"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://buymeacoffee.com/reaz1995"
   }
 }
