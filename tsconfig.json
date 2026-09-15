@@ -1,13 +1,12 @@
 {
   "compilerOptions": {
     "rootDir": "./src",
-    "target": "ES2019",
-    "module": "commonjs",
-    "lib": ["ES2019", "dom"],
+    "target": "ES2022",
+    "module": "node16",
+    "lib": ["ES2022", "dom"],
     "skipLibCheck": true,
     "declaration": true,
     "removeComments": true,
-    "downlevelIteration": true,
     "allowJs": true,
     "outDir": "./lib",
     "sourceMap": true,
@@ -17,7 +16,7 @@
     "noImplicitThis": false,
     "strictNullChecks": false,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*"],
